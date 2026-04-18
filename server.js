@@ -34,7 +34,7 @@ const MODEL_MAPPING = {
   'deepseek-v3.2': 'deepseek-ai/deepseek-v3.2',
   'gpt-oss-120b': 'openai/gpt-oss-120b',
   'minimax-m2.7': 'minimaxai/minimax-m2.7',
-  'glm-5.1': 'z-ai/glm5.1'
+  'glm-5.1': 'z-ai/glm-5.1'
 };
 
 // Health check endpoint
