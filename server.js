@@ -36,7 +36,8 @@ const MODEL_MAPPING = {
   'minimax-m2.7': 'minimaxai/minimax-m2.7',
   'glm-5.1': 'z-ai/glm-5.1',
   'glm-4.7': 'z-ai/glm4.7',
-  'deepseek-v4': 'deepseek-ai/deepseek-v4-pro'
+  'deepseek-v4-pro': 'deepseek-ai/deepseek-v4-pro',
+  'deepseek-v4-flash': 'deepseek-ai/deepseek-v4-flash'
 };
 
 // Health check endpoint
