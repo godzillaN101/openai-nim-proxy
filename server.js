@@ -109,15 +109,16 @@ app.post('/v1/chat/completions', async (req, res) => {
     //   extra_body: ENABLE_THINKING_MODE ? { "chat_template_kwargs": {"enable_thinking":true, "clear_thinking":false} } : undefined,
     //   stream: stream || false
     // };
-    let chat_template_kwargs = {};
-    if (!ENABLE_THINKING_MODE) {
-      chat_template_kwargs = undefined;
-    }
-    else if (thinking_models.includes(nimModel)) {
-      chat_template_kwargs = {"thinking": true, "reasoning_effort": "max"};
-    } else {
-      chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false};
-    }
+    // let chat_template_kwargs = {};
+    // if (!ENABLE_THINKING_MODE) {
+    //   chat_template_kwargs = undefined;
+    // }
+    // else if (thinking_models.includes(nimModel)) {
+    //   chat_template_kwargs = {"thinking": true, "reasoning_effort": "max"};
+    // } else {
+    //   chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false};
+    // }
+    const chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false, "thinking": true, "reasoning_effort": "max"};
     const nimRequest = {
         model: nimModel,
         messages: messages,
