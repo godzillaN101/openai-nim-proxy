@@ -40,7 +40,7 @@ const MODEL_MAPPING = {
   'deepseek-v4-flash': 'deepseek-ai/deepseek-v4-flash',
   'qwen-3.5': 'qwen/qwen3.5-397b-a17b'
 };
-
+const thinking_models = ["deepseek-ai/deepseek-v4-pro", "deepseek-ai/deepseek-v4-flash"]
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -70,9 +70,7 @@ app.get('/v1/models', (req, res) => {
 app.post('/v1/chat/completions', async (req, res) => {
   try {
     const { model, messages, temperature, max_tokens, stream } = req.body;
-    
     // Smart model selection with fallback
-    thinking_models = ["deepseek-ai/deepseek-v4-pro", "deepseek-ai/deepseek-v4-flash"]
     let nimModel = MODEL_MAPPING[model];
     if (!nimModel) {
       try {
