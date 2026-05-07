@@ -123,7 +123,7 @@ app.post('/v1/chat/completions', async (req, res) => {
         model: nimModel,
         messages: messages,
         temperature: temperature || 0.6,
-        max_tokens: max_tokens || 10000,
+        max_tokens: max_tokens || 50000,
         chat_template_kwargs,
         stream: stream || false
       };
@@ -242,16 +242,14 @@ app.post('/v1/chat/completions', async (req, res) => {
     
   } catch (error) {
     console.error('Proxy error:', error.message);
-  console.error('Full NVIDIA error:', JSON.stringify(error.response?.data, null, 2));
-
-  res.status(error.response?.status || 500).json({
-    error: {
-      message: error.response?.data?.error?.message || error.message || 'Internal server error',
-      type: error.response?.data?.error?.type || 'invalid_request_error',
-      code: error.response?.status || 500,
-      details: error.response?.data
-    }
-  });
+    
+    res.status(error.response?.status || 500).json({
+      error: {
+        message: error.message || 'Internal server error',
+        type: 'invalid_request_error',
+        code: error.response?.status || 500
+      }
+    });
   }
 });
 
