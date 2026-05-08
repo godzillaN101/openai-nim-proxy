@@ -164,7 +164,7 @@ app.post('/v1/chat/completions', async (req, res) => {
                 const reasoning = data.choices[0].delta.reasoning_content;
                 const content = data.choices[0].delta.content;
                 
-                if (SHOW_REASONING) {
+                if (SHOW_REASONING && !thinking_models.includes(nimModel)) {
                   let combinedContent = '';
                   
                   if (reasoning && !reasoningStarted) {
