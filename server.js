@@ -40,7 +40,7 @@ const MODEL_MAPPING = {
   'deepseek-v4-flash': 'deepseek-ai/deepseek-v4-flash',
   'qwen-3.5': 'qwen/qwen3.5-397b-a17b'
 };
-const thinking_models = ["glm-5.1"]
+const thinking_models = ["z-ai/glm-5.1"]
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -118,7 +118,7 @@ app.post('/v1/chat/completions', async (req, res) => {
     // } else {
     //   chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false};
     // }
-    const chat_template_kwargs = thinking_models.includes(model) ? {"enable_thinking": true, "clear_thinking": false, "thinking": true, "reasoning_effort": "max"} : undefined;
+    const chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false, "thinking": true, "reasoning_effort": "max"};
     const nimRequest = {
         model: nimModel,
         messages: messages,
@@ -217,7 +217,7 @@ app.post('/v1/chat/completions', async (req, res) => {
         choices: response.data.choices.map(choice => {
           let fullContent = choice.message?.content || '';
           
-          if (SHOW_REASONING && choice.message?.reasoning_content) {
+          if (SHOW_REASONING && choice.message?.reasoning_content && !thinking_models,includes(nimModel)) {
             fullContent = '<think>\n' + choice.message.reasoning_content + '\n</think>\n\n' + fullContent;
           }
           
