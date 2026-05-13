@@ -40,7 +40,7 @@ const MODEL_MAPPING = {
   'deepseek-v4-flash': 'deepseek-ai/deepseek-v4-flash',
   'qwen-3.5': 'qwen/qwen3.5-397b-a17b'
 };
-const thinking_models = ["z-ai/glm-5.1"]
+const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b"]
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -217,7 +217,7 @@ app.post('/v1/chat/completions', async (req, res) => {
         choices: response.data.choices.map(choice => {
           let fullContent = choice.message?.content || '';
           
-          if (SHOW_REASONING && choice.message?.reasoning_content && !thinking_models,includes(nimModel)) {
+          if (SHOW_REASONING && choice.message?.reasoning_content && !thinking_models.includes(nimModel)) {
             fullContent = '<think>\n' + choice.message.reasoning_content + '\n</think>\n\n' + fullContent;
           }
           
