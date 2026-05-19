@@ -38,7 +38,8 @@ const MODEL_MAPPING = {
   'glm-4.7': 'z-ai/glm4.7',
   'deepseek-v4-pro': 'deepseek-ai/deepseek-v4-pro',
   'deepseek-v4-flash': 'deepseek-ai/deepseek-v4-flash',
-  'qwen-3.5': 'qwen/qwen3.5-397b-a17b'
+  'qwen-3.5': 'qwen/qwen3.5-397b-a17b',
+  'nemotron-3-super': 'nvidia/nemotron-3-super-120b-a12b'
 };
 const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b"]
 // Health check endpoint
