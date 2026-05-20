@@ -121,15 +121,25 @@ app.post('/v1/chat/completions', async (req, res) => {
     //   chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false};
     // }
     const chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false, "thinking": true, "reasoning_effort": "max"};
-    const nimRequest = {
-        model: nimModel,
-        messages: messages,
-        temperature: temperature || 0.6,
-        max_tokens: max_tokens || 50000,
-        chat_template_kwargs,
-        stream: stream || false
+    let nimRequest = {}
+    if (nimModel == "mistralai/mistral-large-3-675b-instruct-2512") {
+      nimRequest = {
+          model: nimModel,
+          messages: messages,
+          temperature: temperature || 0.6,
+          max_tokens: max_tokens || 50000,
+          stream: stream || false
       };
-    
+    } else {
+        nimRequest = {
+          model: nimModel,
+          messages: messages,
+          temperature: temperature || 0.6,
+          max_tokens: max_tokens || 50000,
+          chat_template_kwargs,
+          stream: stream || false
+      };
+    }
     // Make request to NVIDIA NIM API
     const response = await axios.post(`${NIM_API_BASE}/chat/completions`, nimRequest, {
       headers: {
