@@ -43,7 +43,7 @@ const MODEL_MAPPING = {
   'mistral-large-3': 'mistralai/mistral-large-3-675b-instruct-2512',
   'step-3.7': 'stepfun-ai/step-3.7-flash'
 };
-const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b"]
+const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash"]
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
