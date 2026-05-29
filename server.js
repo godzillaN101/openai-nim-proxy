@@ -123,7 +123,8 @@ app.post('/v1/chat/completions', async (req, res) => {
     // }
     const chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false, "thinking": true, "reasoning_effort": "max"};
     let nimRequest = {}
-    if (nimModel == "mistralai/mistral-large-3-675b-instruct-2512") {
+    let auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512","stepfun-ai/step-3.7-flash"]
+    if (auto_think_models.includes(nimModel)) {
       nimRequest = {
           model: nimModel,
           messages: messages,
