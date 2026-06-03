@@ -8,7 +8,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '200mb' })); app.use(express.urlencoded({ limit: '200mb', extended: true }));
+app.use(express.json({ limit: '200mb' }));
+app.use(express.urlencoded({ limit: '200mb', extended: true }));
 
 // NVIDIA NIM API configuration
 const NIM_API_BASE = process.env.NIM_API_BASE || 'https://integrate.api.nvidia.com/v1';
@@ -16,9 +17,6 @@ const NIM_API_KEY = process.env.NIM_API_KEY;
 
 // 🔥 REASONING DISPLAY TOGGLE - Shows/hides reasoning in output
 const SHOW_REASONING = true; // Set to true to show reasoning with <think> tags
-
-// 🔥 THINKING MODE TOGGLE - Enables thinking for specific models that support it
-const ENABLE_THINKING_MODE = true; // Set to true to enable chat_template_kwargs thinking parameter
 
 // Model mapping (adjust based on available NIM models)
 const MODEL_MAPPING = {
@@ -43,56 +41,63 @@ const MODEL_MAPPING = {
   'mistral-large-3': 'mistralai/mistral-large-3-675b-instruct-2512',
   'step-3.7': 'stepfun-ai/step-3.7-flash'
 };
-const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash"]
+
+// These models use a different thinking param style (thinking/reasoning_effort instead of enable_thinking)
+const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash"];
+
+// These models always think on their own — don't send any chat_template_kwargs
+const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash"];
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
-    service: 'OpenAI to NVIDIA NIM Proxy', 
+  res.json({
+    status: 'ok',
+    service: 'OpenAI to NVIDIA NIM Proxy',
     reasoning_display: SHOW_REASONING,
-    thinking_mode: ENABLE_THINKING_MODE
+    tip: 'Append -no-think to any model name to disable thinking (e.g. minimax-m2.7-no-think)'
   });
 });
 
 // List models endpoint (OpenAI compatible)
+// Exposes both normal and -no-think variants for every model
 app.get('/v1/models', (req, res) => {
-  const models = Object.keys(MODEL_MAPPING).map(model => ({
-    id: model,
-    object: 'model',
-    created: Date.now(),
-    owned_by: 'nvidia-nim-proxy'
-  }));
-  
-  res.json({
-    object: 'list',
-    data: models
+  const models = [];
+  Object.keys(MODEL_MAPPING).forEach(model => {
+    models.push({ id: model,               object: 'model', created: Date.now(), owned_by: 'nvidia-nim-proxy' });
+    models.push({ id: `${model}-no-think`, object: 'model', created: Date.now(), owned_by: 'nvidia-nim-proxy' });
   });
+
+  res.json({ object: 'list', data: models });
 });
 
 // Chat completions endpoint (main proxy)
 app.post('/v1/chat/completions', async (req, res) => {
   try {
-    const { model, messages, temperature, max_tokens, stream } = req.body;
+    let { model, messages, temperature, max_tokens, stream } = req.body;
+
+    // ── Detect and strip -no-think suffix ──────────────────────────────────
+    const noThinkRequested = model.endsWith('-no-think');
+    const cleanModel = noThinkRequested ? model.slice(0, -'-no-think'.length) : model;
+    // ───────────────────────────────────────────────────────────────────────
+
     // Smart model selection with fallback
-    let nimModel = MODEL_MAPPING[model];
+    let nimModel = MODEL_MAPPING[cleanModel];
     if (!nimModel) {
       try {
         await axios.post(`${NIM_API_BASE}/chat/completions`, {
-          model: model,
+          model: cleanModel,
           messages: [{ role: 'user', content: 'test' }],
           max_tokens: 1
         }, {
           headers: { 'Authorization': `Bearer ${NIM_API_KEY}`, 'Content-Type': 'application/json' },
           validateStatus: (status) => status < 500
-        }).then(res => {
-          if (res.status >= 200 && res.status < 300) {
-            nimModel = model;
-          }
+        }).then(r => {
+          if (r.status >= 200 && r.status < 300) nimModel = cleanModel;
         });
       } catch (e) {}
-      
+
       if (!nimModel) {
-        const modelLower = model.toLowerCase();
+        const modelLower = cleanModel.toLowerCase();
         if (modelLower.includes('gpt-4') || modelLower.includes('claude-opus') || modelLower.includes('405b')) {
           nimModel = 'meta/llama-3.1-405b-instruct';
         } else if (modelLower.includes('claude') || modelLower.includes('gemini') || modelLower.includes('70b')) {
@@ -102,46 +107,49 @@ app.post('/v1/chat/completions', async (req, res) => {
         }
       }
     }
-    
-    // Transform OpenAI request to NIM format
-    // const nimRequest = {
-    //   model: nimModel,
-    //   messages: messages,
-    //   temperature: temperature || 0.6,
-    //   max_tokens: max_tokens || 50000,
-    //   extra_body: ENABLE_THINKING_MODE ? { "chat_template_kwargs": {"enable_thinking":true, "clear_thinking":false} } : undefined,
-    //   stream: stream || false
-    // };
-    // let chat_template_kwargs = {};
-    // if (!ENABLE_THINKING_MODE) {
-    //   chat_template_kwargs = undefined;
-    // }
-    // else if (thinking_models.includes(nimModel)) {
-    //   chat_template_kwargs = {"thinking": true, "reasoning_effort": "max"};
-    // } else {
-    //   chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false};
-    // }
-    const chat_template_kwargs = {"enable_thinking": true, "clear_thinking": false, "thinking": true, "reasoning_effort": "max"};
-    let nimRequest = {}
-    let auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512","stepfun-ai/step-3.7-flash"]
+
+    // ── Build chat_template_kwargs based on thinking preference ────────────
+    let chat_template_kwargs;
+
+    if (noThinkRequested) {
+      // User explicitly wants NO thinking
+      if (thinking_models.includes(nimModel)) {
+        chat_template_kwargs = { thinking: false, reasoning_effort: "none" };
+      } else {
+        chat_template_kwargs = { enable_thinking: false, clear_thinking: true };
+      }
+    } else {
+      // Default: thinking ON
+      if (thinking_models.includes(nimModel)) {
+        chat_template_kwargs = { thinking: true, reasoning_effort: "max" };
+      } else {
+        chat_template_kwargs = { enable_thinking: true, clear_thinking: false };
+      }
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
+    // Build NIM request
+    let nimRequest;
     if (auto_think_models.includes(nimModel)) {
+      // These models manage thinking themselves — never send chat_template_kwargs
       nimRequest = {
-          model: nimModel,
-          messages: messages,
-          temperature: temperature || 0.6,
-          max_tokens: max_tokens || 50000,
-          stream: stream || false
+        model: nimModel,
+        messages,
+        temperature: temperature || 0.6,
+        max_tokens: max_tokens || 50000,
+        stream: stream || false
       };
     } else {
-        nimRequest = {
-          model: nimModel,
-          messages: messages,
-          temperature: temperature || 0.6,
-          max_tokens: max_tokens || 50000,
-          chat_template_kwargs,
-          stream: stream || false
+      nimRequest = {
+        model: nimModel,
+        messages,
+        temperature: temperature || 0.6,
+        max_tokens: max_tokens || 50000,
+        chat_template_kwargs,
+        stream: stream || false
       };
     }
+
     // Make request to NVIDIA NIM API
     const response = await axios.post(`${NIM_API_BASE}/chat/completions`, nimRequest, {
       headers: {
@@ -150,61 +158,56 @@ app.post('/v1/chat/completions', async (req, res) => {
       },
       responseType: stream ? 'stream' : 'json'
     });
-    
+
     if (stream) {
-      // Handle streaming response with reasoning
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
-      
+
       let buffer = '';
       let reasoningStarted = false;
-      
+
       response.data.on('data', (chunk) => {
         buffer += chunk.toString();
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
-        
+
         lines.forEach(line => {
           if (line.startsWith('data: ')) {
             if (line.includes('[DONE]')) {
               res.write(line + '\n');
               return;
             }
-            
+
             try {
               const data = JSON.parse(line.slice(6));
               if (data.choices?.[0]?.delta) {
                 const reasoning = data.choices[0].delta.reasoning_content;
                 const content = data.choices[0].delta.content;
-                
-                if (SHOW_REASONING && !thinking_models.includes(nimModel)) {
+
+                if (SHOW_REASONING && !noThinkRequested && !thinking_models.includes(nimModel)) {
                   let combinedContent = '';
-                  
+
                   if (reasoning && !reasoningStarted) {
                     combinedContent = '<think>\n' + reasoning;
                     reasoningStarted = true;
                   } else if (reasoning) {
                     combinedContent = reasoning;
                   }
-                  
+
                   if (content && reasoningStarted) {
                     combinedContent += '</think>\n\n' + content;
                     reasoningStarted = false;
                   } else if (content) {
                     combinedContent += content;
                   }
-                  
+
                   if (combinedContent) {
                     data.choices[0].delta.content = combinedContent;
                     delete data.choices[0].delta.reasoning_content;
                   }
                 } else {
-                  if (content) {
-                    data.choices[0].delta.content = content;
-                  } else {
-                    data.choices[0].delta.content = '';
-                  }
+                  data.choices[0].delta.content = content || '';
                   delete data.choices[0].delta.reasoning_content;
                 }
               }
@@ -215,26 +218,26 @@ app.post('/v1/chat/completions', async (req, res) => {
           }
         });
       });
-      
+
       response.data.on('end', () => res.end());
       response.data.on('error', (err) => {
         console.error('Stream error:', err);
         res.end();
       });
     } else {
-      // Transform NIM response to OpenAI format with reasoning
+      // Non-streaming response
       const openaiResponse = {
         id: `chatcmpl-${Date.now()}`,
         object: 'chat.completion',
         created: Math.floor(Date.now() / 1000),
-        model: model,
+        model: model, // Echo back the original model name (including -no-think if used)
         choices: response.data.choices.map(choice => {
           let fullContent = choice.message?.content || '';
-          
-          if (SHOW_REASONING && choice.message?.reasoning_content && !thinking_models.includes(nimModel)) {
+
+          if (SHOW_REASONING && !noThinkRequested && choice.message?.reasoning_content && !thinking_models.includes(nimModel)) {
             fullContent = '<think>\n' + choice.message.reasoning_content + '\n</think>\n\n' + fullContent;
           }
-          
+
           return {
             index: choice.index,
             message: {
@@ -250,13 +253,13 @@ app.post('/v1/chat/completions', async (req, res) => {
           total_tokens: 0
         }
       };
-      
+
       res.json(openaiResponse);
     }
-    
+
   } catch (error) {
     console.error('Proxy error:', error.message);
-    
+
     res.status(error.response?.status || 500).json({
       error: {
         message: error.message || 'Internal server error',
@@ -282,5 +285,5 @@ app.listen(PORT, () => {
   console.log(`OpenAI to NVIDIA NIM Proxy running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
   console.log(`Reasoning display: ${SHOW_REASONING ? 'ENABLED' : 'DISABLED'}`);
-  console.log(`Thinking mode: ${ENABLE_THINKING_MODE ? 'ENABLED' : 'DISABLED'}`);
+  console.log(`Tip: append -no-think to any model name to disable thinking`);
 });
