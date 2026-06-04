@@ -39,11 +39,12 @@ const MODEL_MAPPING = {
   'qwen-3.5': 'qwen/qwen3.5-397b-a17b',
   'nemotron-3-super': 'nvidia/nemotron-3-super-120b-a12b',
   'mistral-large-3': 'mistralai/mistral-large-3-675b-instruct-2512',
-  'step-3.7': 'stepfun-ai/step-3.7-flash'
+  'step-3.7': 'stepfun-ai/step-3.7-flash',
+  'nemotron-3-ultra': 'nvidia/nemotron-3-ultra-550b-a55b'
 };
 
 // These models use a different thinking param style (thinking/reasoning_effort instead of enable_thinking)
-const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash"];
+const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b"];
 
 // These models always think on their own — don't send any chat_template_kwargs
 const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash"];
@@ -121,7 +122,7 @@ app.post('/v1/chat/completions', async (req, res) => {
     } else {
       // Default: thinking ON
       if (thinking_models.includes(nimModel)) {
-        chat_template_kwargs = { thinking: true, reasoning_effort: "max" };
+        chat_template_kwargs = { thinking: true, reasoning_effort: "high" };
       } else {
         chat_template_kwargs = { enable_thinking: true, clear_thinking: false };
       }
