@@ -114,11 +114,7 @@ app.post('/v1/chat/completions', async (req, res) => {
 
     if (noThinkRequested) {
       // User explicitly wants NO thinking
-      if (thinking_models.includes(nimModel)) {
-        chat_template_kwargs = { thinking: false, reasoning_effort: "none" };
-      } else {
-        chat_template_kwargs = { enable_thinking: false, clear_thinking: true };
-      }
+      chat_template_kwargs = {};
     } else {
       // Default: thinking ON
       if (thinking_models.includes(nimModel)) {
