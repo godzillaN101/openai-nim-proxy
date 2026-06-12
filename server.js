@@ -40,7 +40,8 @@ const MODEL_MAPPING = {
   'nemotron-3-super': 'nvidia/nemotron-3-super-120b-a12b',
   'mistral-large-3': 'mistralai/mistral-large-3-675b-instruct-2512',
   'step-3.7': 'stepfun-ai/step-3.7-flash',
-  'nemotron-3-ultra': 'nvidia/nemotron-3-ultra-550b-a55b'
+  'nemotron-3-ultra': 'nvidia/nemotron-3-ultra-550b-a55b',
+  'minimax-m3': 'minimaxai/minimax-m3'
 };
 
 // These models use a different thinking param style (thinking/reasoning_effort instead of enable_thinking)
@@ -120,7 +121,7 @@ app.post('/v1/chat/completions', async (req, res) => {
       if (thinking_models.includes(nimModel)) {
         chat_template_kwargs = { thinking: true, reasoning_effort: "high" };
       } else {
-        chat_template_kwargs = { enable_thinking: true, clear_thinking: false };
+        chat_template_kwargs = { enable_thinking: true, clear_thinking: false, thinking_mode: true };
       }
     }
     // ───────────────────────────────────────────────────────────────────────
