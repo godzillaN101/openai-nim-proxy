@@ -121,7 +121,7 @@ app.post('/v1/chat/completions', async (req, res) => {
       if (thinking_models.includes(nimModel)) {
         chat_template_kwargs = { thinking: true, reasoning_effort: "high" };
       } else {
-        chat_template_kwargs = { enable_thinking: true, clear_thinking: false, thinking_mode: true };
+        chat_template_kwargs = { enable_thinking: true, clear_thinking: false, thinking_mode: "enabled" };
       }
     }
     // ───────────────────────────────────────────────────────────────────────
