@@ -48,7 +48,7 @@ const MODEL_MAPPING = {
 const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b"];
 
 // These models always think on their own — don't send any chat_template_kwargs
-const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash", "minimaxai/minimax-m3"];
+const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash"];
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -121,7 +121,7 @@ app.post('/v1/chat/completions', async (req, res) => {
       if (thinking_models.includes(nimModel)) {
         chat_template_kwargs = { thinking: true, reasoning_effort: "high" };
       } else {
-        chat_template_kwargs = { enable_thinking: true, clear_thinking: false, thinking_mode: "enabled" };
+        chat_template_kwargs = { enable_thinking: true, clear_thinking: false, thinking_mode: true };
       }
     }
     // ───────────────────────────────────────────────────────────────────────
