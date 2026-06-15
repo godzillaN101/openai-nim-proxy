@@ -48,7 +48,7 @@ const MODEL_MAPPING = {
 const thinking_models = ["z-ai/glm-5.1", "qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b"];
 
 // These models always think on their own — don't send any chat_template_kwargs
-const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash"];
+const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash", "minimaxai/minimax-m3"];
 
 // Health check endpoint
 app.get('/health', (req, res) => {
