@@ -45,7 +45,7 @@ const MODEL_MAPPING = {
 };
 
 // These models use a different thinking param style (thinking/reasoning_effort instead of enable_thinking)
-const thinking_models = ["qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b"];
+const thinking_models = ["qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b", "deepseek-ai/deepseek-v4-pro", "deepseek-ai/deepseek-v4-flash"];
 
 // These models always think on their own — don't send any chat_template_kwargs
 const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash"];
@@ -183,7 +183,7 @@ app.post('/v1/chat/completions', async (req, res) => {
                 const reasoning = data.choices[0].delta.reasoning_content;
                 const content = data.choices[0].delta.content;
 
-                if (SHOW_REASONING && !noThinkRequested && !thinking_models.includes(nimModel)) {
+                if (SHOW_REASONING && !noThinkRequested && thinking_models.includes(nimModel)) {
                   let combinedContent = '';
 
                   if (reasoning && !reasoningStarted) {
