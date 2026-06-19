@@ -20,20 +20,10 @@ const SHOW_REASONING = true; // Set to true to show reasoning with <think> tags
 
 // Model mapping (adjust based on available NIM models)
 const MODEL_MAPPING = {
-  'gpt-3.5-turbo': 'nvidia/llama-3.1-nemotron-ultra-253b-v1',
-  'gpt-4': 'qwen/qwen3-coder-480b-a35b-instruct',
-  'gpt-4-turbo': 'moonshotai/kimi-k2-instruct-0905',
-  'gpt-4o': 'deepseek-ai/deepseek-v3.1',
-  'claude-3-opus': 'openai/gpt-oss-120b',
-  'claude-3-sonnet': 'openai/gpt-oss-20b',
-  'gemini-pro': 'qwen/qwen3-next-80b-a3b-thinking',
-  'glm-5': 'z-ai/glm5',
   'kimi-k2.6': 'moonshotai/kimi-k2.6',
-  'deepseek-v3.2': 'deepseek-ai/deepseek-v3.2',
   'gpt-oss-120b': 'openai/gpt-oss-120b',
   'minimax-m2.7': 'minimaxai/minimax-m2.7',
   'glm-5.1': 'z-ai/glm-5.1',
-  'glm-4.7': 'z-ai/glm4.7',
   'deepseek-v4-pro': 'deepseek-ai/deepseek-v4-pro',
   'deepseek-v4-flash': 'deepseek-ai/deepseek-v4-flash',
   'qwen-3.5': 'qwen/qwen3.5-397b-a17b',
@@ -45,7 +35,7 @@ const MODEL_MAPPING = {
 };
 
 // These models use a different thinking param style (thinking/reasoning_effort instead of enable_thinking)
-const thinking_models = ["qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b", "deepseek-ai/deepseek-v4-pro", "deepseek-ai/deepseek-v4-flash"];
+const thinking_models = ["qwen/qwen3.5-397b-a17b", "stepfun-ai/step-3.7-flash", "nvidia/nemotron-3-ultra-550b-a55b", "deepseek-ai/deepseek-v4-pro", "deepseek-ai/deepseek-v4-flash", "z-ai/glm-5.1"];
 
 // These models always think on their own — don't send any chat_template_kwargs
 const auto_think_models = ["mistralai/mistral-large-3-675b-instruct-2512", "stepfun-ai/step-3.7-flash"];
